@@ -1,0 +1,12 @@
+class Errors:
+    NoData = "No data"
+    InvalidToken = "Invalid token"
+    InvalidMoniker = "Invalid moniker"
+    NoMonikerSpecified = "No moniker specified"
+    InvalidPlatform = "Invalid platform"
+    NoBlocks = "No blocks"
+    NoValidators = "No validators"
+    NoValidatorWithMoniker = "No validator with this moniker"
+    NoConsensusPubkey = "No consensus pubkey"
+    NoSlashingInfo = "No slashing info"
+    NoMissedBlocksCounter = "No missed blocks"
