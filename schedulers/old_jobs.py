@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import environs
-import math
+
 
 from aiogram import Bot
 from aiogram.dispatcher.fsm.storage.redis import RedisStorage
@@ -11,19 +11,15 @@ from api.requests import MintScanner
 from schedulers.exceptions import NoSlashingInfo, raise_error
 from schedulers.exceptions import raise_error
 
-from name_node import skipped_blocks_allowed, time_jail
+from name_node import skipped_blocks_allowed
 
 env = environs.Env()
 env.read_env()
 ADMIN_ID = env.str("ADMINS")
 
 
-def two_zero(integer):
-    if integer < 10:
-        return "0" + str(integer)
 
-    else:
-        return integer
+
 
 async def add_user_checker(bot: Bot, mint_scanner: MintScanner, user_id: int, platform: str, moniker: str,
                            storage: RedisStorage):
@@ -41,12 +37,10 @@ async def add_user_checker(bot: Bot, mint_scanner: MintScanner, user_id: int, pl
         if right_blocks:
             old = checkers[str(user_id)][platform][moniker]['last_check']
             rizn = new - old
-            vidsot_skip_blok = (100 * rizn) / skipped_blocks_allowed
-            vidsot_time_to_jail = ( ( (100 - vidsot_skip_blok) * time_jail ) / 100 ) / 60
-            #return right_blocks, round(vidsot_skip_blok, 2), round(vidsot_time_to_jail)
-            return right_blocks, rizn, round(vidsot_time_to_jail)
+            vidsot = (100 * rizn) / 2000
+            return right_blocks, vidsot
         else:
-            return 0, 0, 0
+            return 0, 0
 
 
 
@@ -85,30 +79,22 @@ async def add_user_checker(bot: Bot, mint_scanner: MintScanner, user_id: int, pl
     missed_blocks_counter_new = data_new['missed_blocks_counter']
     logging.info(f"Second missed blocks counter: {missed_blocks_counter_new}")
 
-#    print(missed_blocks_counter, missed_blocks_counter_new)
-    missed_blocks_counter_new, percentages, time_to_jail = await check(missed_blocks_counter, missed_blocks_counter_new)
-#    print(missed_blocks_counter_new, percentages)
-
+    print(missed_blocks_counter, missed_blocks_counter_new)
+    missed_blocks_counter_new, percentages = await check(missed_blocks_counter, missed_blocks_counter_new)
+    print(missed_blocks_counter_new, percentages)
     if not missed_blocks_counter_new:
         await storage.redis.set('checkers', json.dumps(checkers))
         return
 
-    elif percentages > 1400:
-        await bot.send_message(user_id, f"<b>Moniker: {moniker}.</b>"
-                               f"\n<b>I've found {percentages} missed blocks out of {skipped_blocks_allowed} total.</b>"
-                               f"\n<b>You have ~{ two_zero( math.floor(time_to_jail / 60) ) }:{ two_zero( time_to_jail % 60 ) } min before jailing.</b>"
-                               f"\n <b>If you don't fix it, your validator will go to jail.</b>")
-
-        await storage.redis.set('checkers', json.dumps(checkers))
-
+    elif percentages > 70:
+        await bot.send_message(user_id, f"<b>I've found {percentages}% missed blocks from {skipped_blocks_allowed}. If you don't fix it, your validator will go to jail. "
+                                        f"moniker: {moniker}.</b>")
 
     else:
-        await bot.send_message(user_id, f"<b>Moniker: {moniker}.</b>"
-                              f"\nI just found {percentages} missed blocks out of {skipped_blocks_allowed} total."
-                              f"\nYou have ~ { two_zero( math.floor(time_to_jail / 60) ) }:{ two_zero( time_to_jail % 60 ) } min before jailing.")
-
-        await storage.redis.set('checkers', json.dumps(checkers))
+        await bot.send_message(user_id, f"I've found {percentages}% missed blocks from {skipped_blocks_allowed}. "
+                                        f"<b>Moniker: {moniker}.</b>")
 
     #checkers[str(user_id)][platform][moniker]['last_check'] = missed_blocks_counter_new
-    #await storage.redis.set('checkers', json.dumps(checkers))
+    await storage.redis.set('checkers', json.dumps(checkers))
 
+ 
