@@ -62,13 +62,13 @@ async def enter_operator_address(message: Message, state: FSMContext,
 
     if get_index_by_moniker(moniker, validators) is None:
         await message.answer(
-            'Sorry, but this validator is not in the active set'
+            'Sorry, but I don\'t found this validator'
         )
         await state.set_state(None)
     else: 
 
         data.setdefault('validators', {})
-        i = len(data.get('validators'))
+        i = str( len(data.get('validators')) )
         for validator_id, validator in data['validators'].items():
             if validator['operator_address'] == moniker:
                 await state.set_state(None)
@@ -76,17 +76,22 @@ async def enter_operator_address(message: Message, state: FSMContext,
                 return await message.answer(
                     'You already have this validator in your list'
                 )
+        
+        logging.info(f'\n\n\n, {data}, \n\n\n')
 
         data['validators'][i] = {
             'chain': name_node,
             'operator_address': message.text
         }
-
+        logging.info(f'"\n\n\n", {data}, "\n\n\n"')
+        print("\n\n\n", data, "\n\n\n")
         await message.answer(
             'Nice! Now I\'ll be checking this validator all day👌'
             )
         # await message.send_stiker(message)
+
         await state.set_state(None)
+        logging.info(f'"\n\n\n", {data}, "\n\n\n"')
         await state.update_data(data)
 
         scheduler.add_job(

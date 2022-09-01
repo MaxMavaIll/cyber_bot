@@ -1,3 +1,4 @@
+import logging
 from name_node import name
 from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher.fsm.context import FSMContext
@@ -8,6 +9,16 @@ from api.config import nodes
 from api.requests import MintScanner
 from tgbot.handlers.manage_checkers.router import checker_router
 from tgbot.misc.states import DeleteChecker
+
+
+def num_data(data, keys_data):
+    new_data = dict()
+    j =  0 
+    logging.info(f"{keys_data}")
+    for i in keys_data:
+        new_data[str( j )] = data[i]
+        j += 1
+    return new_data
 
 
 @checker_router.message(Command(commands=['delete_checker']))
@@ -61,6 +72,9 @@ async def enter_operator_address(message: Message, state: FSMContext,
 
     if validator_to_delete:
         validators.pop(validator_to_delete)
+        logging.info(f"{data}")
+        validators = num_data(validators, validators.keys())
+        logging.info(f"{data}")
         await state.update_data(validators=validators)
 
         await message.answer(
